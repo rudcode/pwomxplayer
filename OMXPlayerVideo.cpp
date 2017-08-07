@@ -295,8 +295,8 @@ bool OMXPlayerVideo::Decode(OMXPacket *pkt)
     m_pts += m_iVideoDelay;
   }
 
-  if(pkt->hints.codec == CODEC_ID_TEXT ||
-     pkt->hints.codec == CODEC_ID_SSA )
+  if(pkt->hints.codec == AV_CODEC_ID_TEXT ||
+     pkt->hints.codec == AV_CODEC_ID_SSA )
   {
     if(!m_pSubtitleCodec)
     {

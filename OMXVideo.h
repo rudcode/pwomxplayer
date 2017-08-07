@@ -49,7 +49,7 @@ public:
 
   // Required overrides
   bool SendDecoderConfig();
-  bool NaluFormatStartCodes(enum CodecID codec, uint8_t *in_extradata, int in_extrasize);
+  bool NaluFormatStartCodes(enum AVCodecID codec, uint8_t *in_extradata, int in_extrasize);
   bool Open(COMXStreamInfo &hints, OMXClock *clock, PwTileMap *tilemap, const CRect &m_DestRect, bool dump_info, float display_aspect = 0.0f, bool deinterlace = false, bool hdmi_clock_sync = false);
   void Close(void);
   unsigned int GetFreeSpace();

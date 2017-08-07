@@ -114,7 +114,7 @@ static offset_t dvd_file_seek(void *h, offset_t pos, int whence)
     return pFile->Seek(pos, whence & ~AVSEEK_FORCE);
 }
 
-bool OMXReader::Open(std::string filename, bool dump_format, bool dump_info)
+bool OMXReader::Open(std::string filename, bool dump_format, bool dump_info, bool live, std::string avdict)
 {
   if (!m_dllAvUtil.Load() || !m_dllAvCodec.Load() || !m_dllAvFormat.Load())
     return false;
@@ -140,13 +140,25 @@ bool OMXReader::Open(std::string filename, bool dump_format, bool dump_info)
     flags |= READ_CACHED;
 #endif
 
+  AVDictionary *d = NULL;
+  result = m_dllAvUtil.av_dict_parse_string(&d, avdict.c_str(), ":", ",", 0);
+
+  if (result < 0)
+  {
+    CLog::Log(LOGERROR, "COMXPlayer::OpenFile - invalid avdict %s ", avdict.c_str());
+    Close();
+    return false;
+  }
+
+  
+
   if(m_filename.substr(0, 8) == "shout://" )
     m_filename.replace(0, 8, "http://");
 
   if(m_filename.substr(0,6) == "mms://" || m_filename.substr(0,7) == "mmsh://" || m_filename.substr(0,7) == "mmst://" || m_filename.substr(0,7) == "mmsu://" ||
       m_filename.substr(0,7) == "http://" || 
       m_filename.substr(0,7) == "rtmp://" || m_filename.substr(0,6) == "udp://" ||
-      m_filename.substr(0,7) == "rtsp://" )
+      m_filename.substr(0,7) == "rtsp://" || m_filename.substr(0,7) == "rtp://" )
   {
     // ffmpeg dislikes the useragent from AirPlay urls
     //int idx = m_filename.Find("|User-Agent=AppleCoreMedia");
@@ -193,7 +205,9 @@ bool OMXReader::Open(std::string filename, bool dump_format, bool dump_info)
 
     m_pFormatContext     = m_dllAvFormat.avformat_alloc_context();
     m_pFormatContext->pb = m_ioContext;
-    result = m_dllAvFormat.avformat_open_input(&m_pFormatContext, m_filename.c_str(), iformat, NULL);
+    result = m_dllAvFormat.avformat_open_input(&m_pFormatContext, m_filename.c_str(), iformat, &d);
+    av_dict_free(&d);
+
     if(result < 0)
     {
       Close();
@@ -219,6 +233,9 @@ bool OMXReader::Open(std::string filename, bool dump_format, bool dump_info)
   if(/*m_bAVI || */m_bMatroska)
     m_pFormatContext->max_analyze_duration = 0;
 #endif
+  
+  if (live)
+    m_pFormatContext->flags |= AVFMT_FLAG_NOBUFFER;
 
   result = m_dllAvFormat.avformat_find_stream_info(m_pFormatContext, NULL);
   if(result < 0)
@@ -681,7 +698,7 @@ void OMXReader::AddStream(int id)
   AVStream *pStream = m_pFormatContext->streams[id];
   // discard PNG stream as we don't support it, and it stops mp3 files playing with album art
   if (pStream->codec->codec_type == AVMEDIA_TYPE_VIDEO && 
-    (pStream->codec->codec_id == CODEC_ID_PNG))
+    (pStream->disposition & AV_DISPOSITION_ATTACHED_PIC))
     return;
 
   switch (pStream->codec->codec_type)
@@ -879,7 +896,7 @@ bool OMXReader::GetHints(AVStream *stream, COMXStreamInfo *hints)
       hints->aspect = av_q2d(stream->codec->sample_aspect_ratio) * stream->codec->width / stream->codec->height;
     else
       hints->aspect = 0.0f;
-    if (m_bAVI && stream->codec->codec_id == CODEC_ID_H264)
+    if (m_bAVI && stream->codec->codec_id == AV_CODEC_ID_H264)
       hints->ptsinvalid = true;
   }
 
@@ -1199,7 +1216,7 @@ std::string OMXReader::GetStreamCodecName(AVStream *stream)
 
 #ifdef FF_PROFILE_DTS_HD_MA
   /* use profile to determine the DTS type */
-  if (stream->codec->codec_id == CODEC_ID_DTS)
+  if (stream->codec->codec_id == AV_CODEC_ID_DTS)
   {
     if (stream->codec->profile == FF_PROFILE_DTS_HD_MA)
       strStreamName = "dtshd_ma";
@@ -1303,8 +1320,8 @@ std::string OMXReader::GetStreamType(OMXStreamType type, unsigned int index)
   {
     if(m_streams[i].type == type &&  m_streams[i].index == index)
     {
-      if (m_streams[i].hints.codec == CODEC_ID_AC3) strcpy(sInfo, "AC3 ");
-      else if (m_streams[i].hints.codec == CODEC_ID_DTS)
+      if (m_streams[i].hints.codec == AV_CODEC_ID_AC3) strcpy(sInfo, "AC3 ");
+      else if (m_streams[i].hints.codec == AV_CODEC_ID_DTS)
       {
 #ifdef FF_PROFILE_DTS_HD_MA
         if (m_streams[i].hints.profile == FF_PROFILE_DTS_HD_MA)
@@ -1315,7 +1332,7 @@ std::string OMXReader::GetStreamType(OMXStreamType type, unsigned int index)
 #endif
           strcpy(sInfo, "DTS ");
       }
-      else if (m_streams[i].hints.codec == CODEC_ID_MP2) strcpy(sInfo, "MP2 ");
+      else if (m_streams[i].hints.codec == AV_CODEC_ID_MP2) strcpy(sInfo, "MP2 ");
       else strcpy(sInfo, "");
 
       if (m_streams[i].hints.channels == 1) strcat(sInfo, "Mono");

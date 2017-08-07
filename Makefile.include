@@ -1,4 +1,4 @@
-NATIVE_BUILD=1
+NATIVE_BUILD=0
 USE_BUILDROOT=1
 
 ifeq ($(NATIVE_BUILD),1)
@@ -7,7 +7,7 @@ BUILDROOT	:= .
 TARGETFS	:=usr/local
 TOOLCHAIN	:=/usr/
 LD		:= $(TOOLCHAIN)/bin/ld
-CC		:= $(TOOLCHAIN)/bin/gcc 
+CC		:= $(TOOLCHAIN)/bin/gcc
 CXX       	:= $(TOOLCHAIN)/bin/g++-4.7
 OBJDUMP		:= $(TOOLCHAIN)/bin/objdump
 RANLIB		:= $(TOOLCHAIN)/bin/ranlib
@@ -33,12 +33,13 @@ else
 FLOAT=hard
 
 ifeq ($(USE_BUILDROOT), 1)
-BUILDROOT	:=/home/pi/omxbuild
-SDKSTAGE	:=$(BUILDROOT)/output/staging
-TARGETFS	:=$(BUILDROOT)/output/target
-TOOLCHAIN	:=$(BUILDROOT)/output/host/usr/
-HOST			:=arm-unknown-linux-gnueabi
-SYSROOT		:=$(BUILDROOT)/output/host/usr/arm-unknown-linux-gnueabi/sysroot
+BUILDROOT	:=/home/hp/raspberrypi/rootfs
+SDKSTAGE	:=/home/hp/raspberrypi/rootfs
+TARGETFS	:=/home/hp/raspberrypi/rootfs
+TOOLCHAIN	:=/home/hp/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian
+HOST		:=arm-linux-gnueabihf
+SYSROOT		:=/home/hp/raspberrypi/rootfs
+#/usr/lib/arm-linux-gnueabihf
 else
 BUILDROOT	:=/opt/bcm-rootfs
 SDKSTAGE	:=/opt/bcm-rootfs
@@ -51,22 +52,23 @@ endif
 VCROOT	:= 
 JOBS=7
 
-CFLAGS			:= -isystem$(PREFIX)/include
+#CFLAGS			:= -isystem$(PREFIX)/include
 CXXFLAGS		:= $(CFLAGS)
 CPPFLAGS		:= $(CFLAGS)
 LDFLAGS			:= -L$(BUILDROOT)/lib
-LD					:= $(TOOLCHAIN)/bin/$(HOST)-ld --sysroot=$(SYSROOT)
-CC					:= $(TOOLCHAIN)/bin/$(HOST)-gcc --sysroot=$(SYSROOT)
-CXX         := $(TOOLCHAIN)/bin/$(HOST)-g++ --sysroot=$(SYSROOT)
+LD			:= $(TOOLCHAIN)/bin/$(HOST)-ld --sysroot=$(SYSROOT)
+CC			:= $(TOOLCHAIN)/bin/$(HOST)-gcc --sysroot=$(SYSROOT)
+CXX         		:= $(TOOLCHAIN)/bin/$(HOST)-g++ --sysroot=$(SYSROOT)
 OBJDUMP			:= $(TOOLCHAIN)/bin/$(HOST)-objdump
 RANLIB			:= $(TOOLCHAIN)/bin/$(HOST)-ranlib
-STRIP				:= $(TOOLCHAIN)/bin/$(HOST)-strip
-AR 					:= $(TOOLCHAIN)/bin/$(HOST)-ar
+STRIP			:= $(TOOLCHAIN)/bin/$(HOST)-strip
+AR 			:= $(TOOLCHAIN)/bin/$(HOST)-ar
 CXXCP 			:= $(CXX) -E
-PATH 				:= $(PREFIX)/bin:$(BUILDROOT)/output/host/usr/bin:$(PATH)
+#PATH 			:= $(PREFIX)/bin:$(BUILDROOT)/output/host/usr/bin:$(PATH)
+#LIBRARY_PATH=/home/hp/raspberrypi/rootfs/lib/arm-linux-gnueabihf:$LIBRARY_PATH
 
-INCLUDES		+= -isystem$(SDKSTAGE)/usr/include -isystem$(SDKSTAGE)/opt/vc/include -isystem$(SYSROOT)/usr/include -isystem$(SDKSTAGE)/opt/vc/include/interface/vcos/pthreads -isystem$(SDKSTAGE)/usr/include/freetype2
-LDFLAGS			+= -L$(SDKSTAGE)/lib -L$(SDKSTAGE)/usr/lib -L$(SDKSTAGE)/opt/vc/lib/
+INCLUDES		+= -isystem$(SDKSTAGE)/usr/include -isystem$(SDKSTAGE)/usr/local/include -isystem$(SDKSTAGE)/opt/vc/include -isystem/home/hp/raspberrypi/rootfs/usr/include/arm-linux-gnueabihf -isystem$(SDKSTAGE)/opt/vc/include/interface/vcos/pthreads -isystem$(SDKSTAGE)/usr/include/freetype2 -isystem$(SDKSTAGE)/usr/include/glib-2.0
+LDFLAGS			+= -L$(SDKSTAGE)/lib -L$(SDKSTAGE)/usr/lib -L$(SDKSTAGE)/opt/vc/lib -L$(SDKSTAGE)/lib/arm-linux-gnueabihf -L$(SDKSTAGE)/usr/lib/arm-linux-gnueabihf
 
 endif
 

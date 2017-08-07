@@ -41,7 +41,6 @@ extern "C" {
 
 #include "DllAvUtil.h"
 #include "DllAvFormat.h"
-#include "DllAvFilter.h"
 #include "DllAvCodec.h"
 #include "linux/RBP.h"
 
@@ -173,6 +172,7 @@ void print_usage()
   printf("         -A / --autotile                use .piwall definitions\n");
   printf("         -R / --role <role>             use role in .piwall\n");
   printf("         -C / --config <config>         use config in .piwall\n");
+  printf("              --live                    Set for live tv or vod type stream\n");
 }
 
 void PrintSubtitleInfo()
@@ -455,6 +455,7 @@ int main(int argc, char *argv[])
 #endif /* WANT_KEYS */
 
   std::string            m_filename;
+  std::string            m_avdict              = "";
   double                m_incr                = 0;
   CRBP                  g_RBP;
   COMXCore              g_OMX;
@@ -465,7 +466,8 @@ int main(int argc, char *argv[])
   bool                  m_refresh             = false;
   double                startpts              = 0;
   CRect                 DestRect              = {0,0,0,0};
-  TV_DISPLAY_STATE_T   tv_state;
+  bool                  m_live = false;
+  TV_DISPLAY_STATE_T    tv_state;
   GError                *error = NULL;
 
   const int font_opt      = 0x100;
@@ -478,6 +480,8 @@ int main(int argc, char *argv[])
   const int boost_on_downmix_opt = 0x200;
   const int tile_code_opt = 0x300;
   const int frame_size_opt = 0x301;
+  const int avdict_opt      = 0x401;
+  const int live_opt = 0x205;
 
   struct option longopts[] = {
     { "info",         no_argument,        NULL,          'i' },
@@ -511,6 +515,8 @@ int main(int argc, char *argv[])
     { "autotile",     no_argument,        NULL,          'A' },
     { "role",         required_argument,  NULL,          'R' },
     { "config",       required_argument,  NULL,          'C' },
+    { "avdict",       required_argument,  NULL,          avdict_opt },
+    { "live",         no_argument,        NULL,          live_opt },
     { 0, 0, 0, 0 }
   };
 
@@ -617,6 +623,9 @@ int main(int argc, char *argv[])
 	if (! m_tilemap) m_tilemap = pwtilemap_create();
 	pwtilemap_set_tilecode(m_tilemap, atoi(optarg));
 	break;
+      case live_opt:
+        m_live = true;
+        break;
       case frame_size_opt:
 	{
 	  float fx, fy;
@@ -689,6 +698,9 @@ int main(int argc, char *argv[])
 	if (! m_tilemap) m_tilemap = pwtilemap_create();
 	pwtilemap_set_config(m_tilemap, optarg);
 	break;
+      case avdict_opt:
+        m_avdict = optarg;
+        break;
       case 0:
         break;
       case 'h':
@@ -764,7 +776,7 @@ int main(int argc, char *argv[])
 
   m_thread_player = true;
 
-  if(!m_omx_reader.Open(m_filename.c_str(), m_dump_format, ! m_quiet))
+  if(!m_omx_reader.Open(m_filename.c_str(), m_dump_format, ! m_quiet, m_live, m_avdict.c_str()))
     goto do_exit;
 
   if(m_dump_format)

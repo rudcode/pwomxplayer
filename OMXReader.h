@@ -24,7 +24,6 @@
 
 #include "DllAvUtil.h"
 #include "DllAvFormat.h"
-#include "DllAvFilter.h"
 #include "DllAvCodec.h"
 #include "OMXStreamInfo.h"
 #ifdef STANDALONE
@@ -146,7 +145,7 @@ private:
 public:
   OMXReader();
   ~OMXReader();
-  bool Open(std::string filename, bool dump_format, bool dump_info);
+  bool Open(std::string filename, bool dump_format, bool dump_info,  bool live = false, std::string avdict = "");
   void ClearStreams();
   bool Close();
   //void FlushRead();

@@ -25,6 +25,9 @@
 #endif
 #include "utils/log.h"
 
+#ifndef AVCODEC_MAX_AUDIO_FRAME_SIZE
+#define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
+#endif
 #define MAX_AUDIO_FRAME_SIZE (AVCODEC_MAX_AUDIO_FRAME_SIZE*1.5)
 
 COMXAudioCodecOMX::COMXAudioCodecOMX()
@@ -99,7 +102,7 @@ bool COMXAudioCodecOMX::Open(COMXStreamInfo &hints)
     return false;
   }
 
-  m_pFrame1 = m_dllAvCodec.avcodec_alloc_frame();
+  m_pFrame1 = m_dllAvCodec.av_frame_alloc();
   m_bOpenedCodec = true;
   m_iSampleFormat = AV_SAMPLE_FMT_NONE;
   return true;
@@ -302,20 +305,20 @@ void COMXAudioCodecOMX::BuildChannelMap()
   m_layout   = m_pCodecContext->channel_layout;
 
   int index = 0;
-  if(m_pCodecContext->codec_id == CODEC_ID_AAC && m_pCodecContext->channels == 3)
+  if(m_pCodecContext->codec_id == AV_CODEC_ID_AAC && m_pCodecContext->channels == 3)
   {
     m_channelMap[index++] = PCM_FRONT_CENTER;
     m_channelMap[index++] = PCM_FRONT_LEFT;
     m_channelMap[index++] = PCM_FRONT_RIGHT;
   }
-  else if(m_pCodecContext->codec_id == CODEC_ID_AAC && m_pCodecContext->channels == 4)
+  else if(m_pCodecContext->codec_id == AV_CODEC_ID_AAC && m_pCodecContext->channels == 4)
   {
     m_channelMap[index++] = PCM_FRONT_CENTER;
     m_channelMap[index++] = PCM_FRONT_LEFT;
     m_channelMap[index++] = PCM_FRONT_RIGHT;
     m_channelMap[index++] = PCM_BACK_CENTER;
   }
-  else if(m_pCodecContext->codec_id == CODEC_ID_AAC && m_pCodecContext->channels == 5)
+  else if(m_pCodecContext->codec_id == AV_CODEC_ID_AAC && m_pCodecContext->channels == 5)
   {
     m_channelMap[index++] = PCM_FRONT_CENTER;
     m_channelMap[index++] = PCM_FRONT_LEFT;
@@ -323,7 +326,7 @@ void COMXAudioCodecOMX::BuildChannelMap()
     m_channelMap[index++] = PCM_BACK_LEFT;
     m_channelMap[index++] = PCM_BACK_RIGHT;
   }
-  else if(m_pCodecContext->codec_id == CODEC_ID_AAC && m_pCodecContext->channels == 6)
+  else if(m_pCodecContext->codec_id == AV_CODEC_ID_AAC && m_pCodecContext->channels == 6)
   {
     m_channelMap[index++] = PCM_FRONT_CENTER;
     m_channelMap[index++] = PCM_FRONT_LEFT;
@@ -332,7 +335,7 @@ void COMXAudioCodecOMX::BuildChannelMap()
     m_channelMap[index++] = PCM_BACK_RIGHT;
     m_channelMap[index++] = PCM_LOW_FREQUENCY;
   }
-  else if(m_pCodecContext->codec_id == CODEC_ID_AAC && m_pCodecContext->channels == 7)
+  else if(m_pCodecContext->codec_id == AV_CODEC_ID_AAC && m_pCodecContext->channels == 7)
   {
     m_channelMap[index++] = PCM_FRONT_CENTER;
     m_channelMap[index++] = PCM_FRONT_LEFT;
@@ -342,7 +345,7 @@ void COMXAudioCodecOMX::BuildChannelMap()
     m_channelMap[index++] = PCM_BACK_CENTER;
     m_channelMap[index++] = PCM_LOW_FREQUENCY;
   }
-  else if(m_pCodecContext->codec_id == CODEC_ID_AAC && m_pCodecContext->channels == 8)
+  else if(m_pCodecContext->codec_id == AV_CODEC_ID_AAC && m_pCodecContext->channels == 8)
   {
     m_channelMap[index++] = PCM_FRONT_CENTER;
     m_channelMap[index++] = PCM_SIDE_LEFT;

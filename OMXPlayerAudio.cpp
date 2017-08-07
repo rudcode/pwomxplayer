@@ -320,8 +320,8 @@ bool OMXPlayerAudio::Decode(OMXPacket *pkt)
   unsigned int old_bitrate = m_hints.bitrate;
   unsigned int new_bitrate = pkt->hints.bitrate;
 
-  /* only check bitrate changes on CODEC_ID_DTS, CODEC_ID_AC3, CODEC_ID_EAC3 */
-  if(m_hints.codec != CODEC_ID_DTS && m_hints.codec != CODEC_ID_AC3 && m_hints.codec != CODEC_ID_EAC3)
+  /* only check bitrate changes on AV_CODEC_ID_DTS, AV_CODEC_ID_AC3, AV_CODEC_ID_EAC3 */
+  if(m_hints.codec != AV_CODEC_ID_DTS && m_hints.codec != AV_CODEC_ID_AC3 && m_hints.codec != AV_CODEC_ID_EAC3)
   {
     new_bitrate = old_bitrate = 0;
   }
@@ -564,11 +564,11 @@ IAudioRenderer::EEncoded OMXPlayerAudio::IsPassthrough(COMXStreamInfo hints)
 
   if(bitstream)
   {
-    if(hints.codec == CODEC_ID_AC3 && g_guiSettings.GetBool("audiooutput.ac3passthrough"))
+    if(hints.codec == AV_CODEC_ID_AC3 && g_guiSettings.GetBool("audiooutput.ac3passthrough"))
     {
       passthrough = IAudioRenderer::ENCODED_IEC61937_AC3;
     }
-    if(hints.codec == CODEC_ID_DTS && g_guiSettings.GetBool("audiooutput.dtspassthrough"))
+    if(hints.codec == AV_CODEC_ID_DTS && g_guiSettings.GetBool("audiooutput.dtspassthrough"))
     {
       passthrough = IAudioRenderer::ENCODED_IEC61937_DTS;
     }
@@ -581,15 +581,15 @@ IAudioRenderer::EEncoded OMXPlayerAudio::IsPassthrough(COMXStreamInfo hints)
 
   IAudioRenderer::EEncoded passthrough = IAudioRenderer::ENCODED_NONE;
 
-  if(hints.codec == CODEC_ID_AC3)
+  if(hints.codec == AV_CODEC_ID_AC3)
   {
     passthrough = IAudioRenderer::ENCODED_IEC61937_AC3;
   }
-  if(hints.codec == CODEC_ID_EAC3)
+  if(hints.codec == AV_CODEC_ID_EAC3)
   {
     passthrough = IAudioRenderer::ENCODED_IEC61937_EAC3;
   }
-  if(hints.codec == CODEC_ID_DTS)
+  if(hints.codec == AV_CODEC_ID_DTS)
   {
     passthrough = IAudioRenderer::ENCODED_IEC61937_DTS;
   }

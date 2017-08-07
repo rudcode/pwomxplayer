@@ -8,10 +8,16 @@ OT_LIBS = -lpwtilemap -lpwutil
 
 CFLAGS+=-std=c++0x -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DHAVE_CMAKE_CONFIG -D__VIDEOCORE4__ -U_FORTIFY_SOURCE -Wall -DHAVE_OMXLIB -DUSE_EXTERNAL_FFMPEG  -DHAVE_LIBAVCODEC_AVCODEC_H -DHAVE_LIBAVUTIL_OPT_H -DHAVE_LIBAVUTIL_MEM_H -DHAVE_LIBAVUTIL_AVUTIL_H -DHAVE_LIBAVFORMAT_AVFORMAT_H -DHAVE_LIBAVFILTER_AVFILTER_H -DHAVE_LIBSWRESAMPLE_SWRESAMPLE_H -DOMX -DOMX_SKIP64BIT -ftree-vectorize -DUSE_EXTERNAL_OMX -DTARGET_RASPBERRY_PI -DUSE_EXTERNAL_LIBBCM_HOST
 
-LDFLAGS+=-L./ -lc -lEGL -lbcm_host -lopenmaxil -lfreetype -lz -Lffmpeg_compiled/usr/local/lib/ $(OT_LIBS)
-INCLUDES+=-I./ -Ilinux -Iffmpeg_compiled/usr/local/include/ $(OT_FLAGS) $(GLIB_FLAGS)
+LDFLAGS+=-L./ -lc -lEGL -lGLESv2 -lbrcmEGL -lbrcmGLESv2 -lvcos -lvchiq_arm -lbcm_host -lopenmaxil -lfreetype -lz -Lffmpeg_compiled/usr/local/lib/ $(OT_LIBS) -L$(SDKSTAGE)/usr/local/lib
 
-DIST ?= omxplayer-dist
+ifeq ($(NATIVE_BUILD),1)
+INCLUDES+=-I./ -Ilinux -Iffmpeg_compiled/usr/local/include/ $(OT_FLAGS) $(GLIB_FLAGS) 
+else
+INCLUDES=-I./ -Ilinux -Iffmpeg_compiled/usr/local/include/ $(OT_FLAGS) $(GLIB_FLAGS) -isystem$(SDKSTAGE)/usr/include -isystem$(SDKSTAGE)/opt/vc/include -isystem/home/hp/raspberrypi/rootfs/usr/include/arm-linux-gnueabihf -isystem$(SDKSTAGE)/opt/vc/include/interface/vcos/pthreads -isystem$(SDKSTAGE)/usr/include/freetype2 -isystem$(SDKSTAGE)/usr/include/glib-2.0 -isystem$(SDKSTAGE)/usr/local/include
+endif
+
+
+DIST ?= pwomxplayer-dist
 
 SRC=linux/XMemUtils.cpp \
 		utils/log.cpp \
@@ -52,7 +58,8 @@ list_test:
 
 pwomxplayer.bin: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $(OBJS) -lrt -lpthread -lavutil -lavcodec -lavformat -lswscale -lswresample -lpcre
-	#arm-unknown-linux-gnueabi-strip omxplayer.bin
+	#$(TOOLCHAIN)/bin/$(HOST)-strip pwomxplayer.bin
+	#arm-unknown-linux-gnueabi omxplayer.bin
 
 -include $(OBJS:.o=.d)
 
@@ -75,12 +82,12 @@ ffmpeg_compile:
 ffmpeg_install:
 	make -f Makefile.ffmpeg install
 
-dist: omxplayer.bin
-	mkdir -p $(DIST)/usr/lib/omxplayer
+dist: pwomxplayer.bin
+	mkdir -p $(DIST)/usr/lib/pwomxplayer
 	mkdir -p $(DIST)/usr/bin
 	mkdir -p $(DIST)/usr/share/doc
-	cp omxplayer omxplayer.bin $(DIST)/usr/bin
+	cp pwomxplayer pwomxplayer.bin $(DIST)/usr/bin
 	cp COPYING $(DIST)/usr/share/doc/
 	cp README.md $(DIST)/usr/share/doc/README
-	cp -a ffmpeg_compiled/usr/local/lib/*.so* $(DIST)/usr/lib/omxplayer/
-	tar -czf omxplayer-dist.tar.gz $(DIST)
+	cp -a ffmpeg_compiled/usr/local/lib/*.so* $(DIST)/usr/lib/pwomxplayer/
+	tar -czf pwomxplayer-dist.tar.gz $(DIST)
